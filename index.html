@@ -3,39 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PDF Size Checker</title>
+<title>PDF Tools</title>
 <link rel="stylesheet" href="styles.css">
 <script src="script.js" defer></script>
+<script src="merge.js" defer></script>
 </head>
 <body>
 <main>
   <header>
-    <h1>PDF Size Checker</h1>
-    <p>Find out the page dimensions of any PDF.</p>
+    <h1>PDF Tools</h1>
+    <p>Simple PDF tools that run in your browser. Your files are never uploaded.</p>
   </header>
 
-  <button id="drop" type="button">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 17v-6"/><path d="m9 14 3-3 3 3"/>
-    </svg>
-    <span class="title">Drop a PDF here or click to choose</span>
-    <span class="hint">Your file stays on your device. Nothing is uploaded.</span>
-  </button>
-  <input type="file" id="file" accept="application/pdf,.pdf" multiple>
+  <nav class="tabs seg" role="tablist" aria-label="Tools">
+    <a href="#size" role="tab" data-tab="size">Page size</a>
+    <a href="#merge" role="tab" data-tab="merge">Merge</a>
+  </nav>
 
-  <div class="toolbar" id="toolbar" hidden>
-    <div class="seg" role="group" aria-label="Units" id="units">
-      <button data-unit="mm">mm</button>
-      <button data-unit="cm">cm</button>
-      <button data-unit="in">in</button>
-      <button data-unit="pt">pt</button>
-      <button data-unit="px">px</button>
+  <section id="tool-size" data-tool="size" role="tabpanel">
+    <button id="drop" class="dropzone" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 17v-6"/><path d="m9 14 3-3 3 3"/>
+      </svg>
+      <span class="title">Drop a PDF here or click to choose</span>
+      <span class="hint">Find out the page dimensions of any PDF.</span>
+    </button>
+    <input type="file" id="file" class="file-input" accept="application/pdf,.pdf" multiple>
+
+    <div class="toolbar" id="toolbar" hidden>
+      <div class="seg" role="group" aria-label="Units" id="units">
+        <button data-unit="mm">mm</button>
+        <button data-unit="cm">cm</button>
+        <button data-unit="in">in</button>
+        <button data-unit="pt">pt</button>
+        <button data-unit="px">px</button>
+      </div>
     </div>
-  </div>
 
-  <div id="results" aria-live="polite"></div>
+    <div id="results" aria-live="polite"></div>
 
-  <footer>Sizes are measured as each page appears on screen, including rotation.</footer>
+    <footer>Sizes are measured as each page appears on screen, including rotation.</footer>
+  </section>
+
+  <section id="tool-merge" data-tool="merge" role="tabpanel" hidden>
+    <button id="mdrop" class="dropzone" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 3H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h2"/><path d="M14 5h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-4"/><path d="M12 3v8"/><path d="m9 8 3 3 3-3"/>
+      </svg>
+      <span class="title">Drop PDFs here or click to choose</span>
+      <span class="hint">Combine several PDFs into one file, in any order.</span>
+    </button>
+    <input type="file" id="mfile" class="file-input" accept="application/pdf,.pdf" multiple>
+
+    <div id="merge-panel" hidden>
+      <div class="list-head">
+        <span id="merge-summary"></span>
+        <span class="list-actions">
+          <button type="button" class="link-btn" id="sort-name">Sort A–Z</button>
+          <button type="button" class="link-btn" id="reverse">Reverse</button>
+          <button type="button" class="link-btn" id="clear">Clear</button>
+        </span>
+      </div>
+      <ol id="merge-list" class="merge-list" aria-label="Files to merge, in order"></ol>
+      <p class="list-tip">Drag files to reorder, or use the arrows.</p>
+
+      <div class="card output">
+        <label for="out-name">File name</label>
+        <div class="name-field">
+          <input type="text" id="out-name" value="merged" spellcheck="false" autocomplete="off">
+          <span class="ext">.pdf</span>
+        </div>
+        <button type="button" id="merge-btn" class="primary">Merge PDFs</button>
+        <div id="merge-status" class="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
 </main>
 
 </body>

@@ -163,14 +163,31 @@ function handle(list) {
 drop.addEventListener("click", () => input.click());
 input.addEventListener("change", () => { handle(input.files); input.value = ""; });
 
-// Accept drops anywhere on the page
+// Tools: each registers a drop zone and a handler for dropped files
+const tools = { size: { zone: drop, handle } };
+let activeTool = "size";
+
+function showTool() {
+  const name = location.hash.slice(1);
+  activeTool = tools[name] ? name : "size";
+  document.querySelectorAll("[data-tool]").forEach((s) => (s.hidden = s.dataset.tool !== activeTool));
+  document.querySelectorAll("[data-tab]").forEach((t) => t.setAttribute("aria-selected", t.dataset.tab === activeTool));
+}
+window.addEventListener("hashchange", showTool);
+// Run after all tool scripts have registered themselves
+window.addEventListener("DOMContentLoaded", showTool);
+
+// Accept file drops anywhere on the page; ignore drags that aren't files (like reordering a list)
+const isFileDrag = (e) => [...(e.dataTransfer?.types || [])].includes("Files");
 let dragDepth = 0;
-window.addEventListener("dragenter", (e) => { e.preventDefault(); dragDepth++; drop.classList.add("over"); });
-window.addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; drop.classList.remove("over"); } });
-window.addEventListener("dragover", (e) => e.preventDefault());
+const zone = () => tools[activeTool].zone;
+window.addEventListener("dragenter", (e) => { if (!isFileDrag(e)) return; e.preventDefault(); dragDepth++; zone().classList.add("over"); });
+window.addEventListener("dragleave", (e) => { if (!isFileDrag(e)) return; if (--dragDepth <= 0) { dragDepth = 0; zone().classList.remove("over"); } });
+window.addEventListener("dragover", (e) => { if (isFileDrag(e)) e.preventDefault(); });
 window.addEventListener("drop", (e) => {
-  e.preventDefault(); dragDepth = 0; drop.classList.remove("over");
-  handle(e.dataTransfer.files);
+  if (!isFileDrag(e)) return;
+  e.preventDefault(); dragDepth = 0; zone().classList.remove("over");
+  tools[activeTool].handle(e.dataTransfer.files);
 });
 
 $("#units").addEventListener("click", (e) => {
