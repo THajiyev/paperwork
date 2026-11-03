@@ -1,5 +1,8 @@
 "use strict";
 
+// Page size tool: shows the page dimensions of PDFs
+(() => {
+
 const PDFJS_URL = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build";
 
 // Loaded with a dynamic import so this file can stay a classic script,
@@ -27,13 +30,9 @@ const PAPER = [
   ["Executive", 522, 756],
 ];
 
-const ICON_X = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`;
-
 let unit = localStorage.getItem("pdfUnit") || "mm";
-let nextId = 1;
 const files = []; // { id, name, pages: [{w,h}] | null, error }
 
-const $ = (s) => document.querySelector(s);
 const drop = $("#drop"), input = $("#file"), results = $("#results"), toolbar = $("#toolbar");
 
 const paperName = (w, h) => {
@@ -47,7 +46,6 @@ const num = (pt, u = unit) => {
   return UNITS[u].digits ? +v.toFixed(UNITS[u].digits) + "" : Math.round(v) + "";
 };
 const dims = (w, h, u = unit) => `${num(w, u)} × ${num(h, u)}`;
-const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const shape = (w, h, max) => {
   const s = max / Math.max(w, h);
   return `<span class="shape" style="width:${Math.max(4, w * s).toFixed(0)}px;height:${Math.max(4, h * s).toFixed(0)}px"></span>`;
@@ -131,7 +129,7 @@ async function readPdf(file) {
   render();
   try {
     const pdfjsLib = await pdfjsReady.catch(() => {
-      throw Object.assign(new Error(), { name: "LoadError" });
+      throw LoadError();
     });
     const doc = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
     const pages = [];
@@ -160,35 +158,7 @@ function handle(list) {
   pdfs.forEach(readPdf);
 }
 
-drop.addEventListener("click", () => input.click());
-input.addEventListener("change", () => { handle(input.files); input.value = ""; });
-
-// Tools: each registers a drop zone and a handler for dropped files
-const tools = { size: { zone: drop, handle } };
-let activeTool = "size";
-
-function showTool() {
-  const name = location.hash.slice(1);
-  activeTool = tools[name] ? name : "size";
-  document.querySelectorAll("[data-tool]").forEach((s) => (s.hidden = s.dataset.tool !== activeTool));
-  document.querySelectorAll("[data-tab]").forEach((t) => t.setAttribute("aria-selected", t.dataset.tab === activeTool));
-}
-window.addEventListener("hashchange", showTool);
-// Run after all tool scripts have registered themselves
-window.addEventListener("DOMContentLoaded", showTool);
-
-// Accept file drops anywhere on the page; ignore drags that aren't files (like reordering a list)
-const isFileDrag = (e) => [...(e.dataTransfer?.types || [])].includes("Files");
-let dragDepth = 0;
-const zone = () => tools[activeTool].zone;
-window.addEventListener("dragenter", (e) => { if (!isFileDrag(e)) return; e.preventDefault(); dragDepth++; zone().classList.add("over"); });
-window.addEventListener("dragleave", (e) => { if (!isFileDrag(e)) return; if (--dragDepth <= 0) { dragDepth = 0; zone().classList.remove("over"); } });
-window.addEventListener("dragover", (e) => { if (isFileDrag(e)) e.preventDefault(); });
-window.addEventListener("drop", (e) => {
-  if (!isFileDrag(e)) return;
-  e.preventDefault(); dragDepth = 0; zone().classList.remove("over");
-  tools[activeTool].handle(e.dataTransfer.files);
-});
+registerTool("size", { zone: drop, input, handle });
 
 $("#units").addEventListener("click", (e) => {
   const b = e.target.closest("button");
@@ -217,3 +187,5 @@ results.addEventListener("click", async (e) => {
     setTimeout(() => (cp.textContent = "Copy size"), 1500);
   }
 });
+
+})();
